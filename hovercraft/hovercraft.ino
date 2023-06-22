@@ -69,6 +69,8 @@ int frontSensorDistance;
 int leftSensorDistance;
 int rightSensorDistance;
 
+int turnDirection = 0; // 0=>forward --- 1=>TURN RIGHT --- 2=>TURN LEFT
+
 void setup() {
 // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -80,7 +82,8 @@ void setup() {
 
     pinMode(liftPin, OUTPUT);
     pinMode(thrustPin, OUTPUT);
-
+    servo0.attach(9);
+    
     Serial.begin(115200);
     while (!Serial);
     mpu.initialize();
@@ -139,7 +142,8 @@ void setup() {
   // set prescaler to 64 (i.e. divide clock speed of timer 1)
   TCCR2B = (1 << CS22);
 
-    servo0.attach(9);
+    
+    digitalWrite(liftPin, HIGH);
 }
 
 void loop() {
@@ -162,33 +166,56 @@ void loop() {
 //    Serial.println(ypr[0]);
   }
     
-    
-    digitalWrite(liftPin, HIGH);
-
-    
     frontSensorDistance = frontSensor.measure_distance_cm();
     leftSensorDistance  = leftSensor.measure_distance_cm();
     rightSensorDistance = rightSensor.measure_distance_cm();
- 
-     Serial.print("Front Distance: ");
-     Serial.println(frontSensorDistance);
-
-     Serial.print("Left Distance: ");
-     Serial.println(leftSensorDistance);
-
-     Serial.print("Right Distance: ");
-     Serial.println(rightSensorDistance);
-
+// 
+//     Serial.print("Front Distance: ");
+//     Serial.println(frontSensorDistance);
+//
+//     Serial.print("Left Distance: ");
+//     Serial.println(leftSensorDistance);
+//
+//     Serial.print("Right Distance: ");
+//     Serial.println(rightSensorDistance);
+    if(frontSensorDistance < 60 ) {
+      analogWrite(thrustPin, 128);
+    }
+    if(frontSensorDistance < 40 ) {
+      if(rightSensorDistance > 40) { // NEED TO TURN RIGHT
+        turnDirection = 2;
+      } else {  // NEED TO TURN LEFT
+        turnDirection = 1;
+      }
+    } else {
+      turnDirection = 0;
+    }
     int servo0Value = map(ypr[0], -90, 90, 0, 180);
 
-    if(frontSensorDistance < 50) {
-//      servo0.write(servo0Value);
+
+    if(turnDirection == 1) {
+      //TURN LEFT
+    } else if(turnDirection == 2) {
+        //TURN RIGHT
+        int yaw = abs(ypr[0]);
+        if((yaw % 90) < 45) { 
+          servo0.write(135);
+        } else {
+          servo0.write(100);        
+        }
+    } else {
+      servo0.write(90);
+ 
+        
     }
-
-
-
     
 }
+
+
+
+
+
+
 
 void calculate_IMU_error() {
   // We can call this funtion in the setup section to calculate the accelerometer and gyro data error. From here we will get the error values used in the above equations printed on the Serial Monitor.
@@ -231,15 +258,5 @@ void calculate_IMU_error() {
   GyroErrorX = GyroErrorX / 200;
   GyroErrorY = GyroErrorY / 200;
   GyroErrorZ = GyroErrorZ / 200;
-  // Print the error values on the Serial Monitor
-//  Serial.print("AccErrorX: ");
-//  Serial.println(AccErrorX);
-//  Serial.print("AccErrorY: ");
-//  Serial.println(AccErrorY);
-//  Serial.print("GyroErrorX: ");
-//  Serial.println(GyroErrorX);
-//  Serial.print("GyroErrorY: ");
-//  Serial.println(GyroErrorY);
-//  Serial.print("GyroErrorZ: ");
-//  Serial.println(GyroErrorZ);
+
 }
