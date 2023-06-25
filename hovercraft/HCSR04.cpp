@@ -42,11 +42,8 @@ float UltraSonicDistanceSensor::measure_distance_cm(float temperature) {
     }
 
     // Measure the length of echo signal, which is equal to the time needed for sound to go there and back.
-    unsigned long durationMicroSec = pulseIn(echoPin, HIGH, maxDistanceDurationMicroSec); // can't measure beyond max distance
-
-    // Serial.print("Pulse Length: "); 
-    // Serial.print(durationMicroSec);
-    // Serial.println();
+      unsigned long durationMicroSec = pulseIn(echoPin, HIGH, maxDistanceDurationMicroSec); // can't measure beyond max distance
+//    avg = avg/5;
 
     float distanceCm = durationMicroSec / 2.0 * speedOfSoundInCmPerMicroSec;
 

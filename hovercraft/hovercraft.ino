@@ -43,33 +43,40 @@ float elapsedTime, currentTime, previousTime;
 int c = 0;
 int j = 0;
 float correct;
+int lol = 0;
 
 
 // US SENSOR SPECIFIC
 // FRONT = P10
 int frontTrigPin = 12; // yellow jumper --> PB4: pin 12
-int frontEchoPin = 8;// blue jumper --> PB0 : pin 8 
-// LEFT = P13
-int leftTrigPin = 13; // yellow jumper --> PB5 : pin 13 
-int leftEchoPin = 3;// blue jumper --> PD3 : pin 3 
+int frontEchoPin = 8;// blue jumper --> PB0 : pin 8
 // Right = P6
-int rightTrigPin = 11; // yellow jumper --> PB3 : pin 11 
+int rightTrigPin = 11; // yellow jumper --> PB3 : pin 11
 int rightEchoPin = 2; // blue jumper --> PD2 : pin 2
 
-// lift fan P11
-int liftPin = 9; // PB1
+// LEFT = P13   
+//int leftTrigPin = 13; // yellow jumper --> PB5 : pin 13 
+//int leftEchoPin = 3;// blue jumper --> PD3 : pin 3 
+
+// lift fan P17
+int liftPin = 7; // PD7
 // thrust fan P4
 int thrustPin = 6; // PD6
 
 UltraSonicDistanceSensor frontSensor(frontTrigPin, frontEchoPin);
-UltraSonicDistanceSensor leftSensor(leftTrigPin, leftEchoPin);
 UltraSonicDistanceSensor rightSensor(rightTrigPin, rightEchoPin);
-
+//UltraSonicDistanceSensor leftSensor(leftTrigPin, leftEchoPin);
+    
+    
 int frontSensorDistance;
-int leftSensorDistance;
 int rightSensorDistance;
+//int leftSensorDistance;
+
+int prevFrontSensorDistance = -1;
+int prevRightSensorDistance = -1;
 
 int turnDirection = 0; // 0=>forward --- 1=>TURN RIGHT --- 2=>TURN LEFT
+int futureDirection = 0;
 
 void setup() {
 // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -82,7 +89,9 @@ void setup() {
 
     pinMode(liftPin, OUTPUT);
     pinMode(thrustPin, OUTPUT);
+
     servo0.attach(9);
+    
     
     Serial.begin(115200);
     while (!Serial);
@@ -142,8 +151,9 @@ void setup() {
   // set prescaler to 64 (i.e. divide clock speed of timer 1)
   TCCR2B = (1 << CS22);
 
-    
+    delay(1500);
     digitalWrite(liftPin, HIGH);
+    analogWrite(thrustPin, 190);
 }
 
 void loop() {
@@ -165,50 +175,71 @@ void loop() {
 //    Serial.print("Yaw: ");
 //    Serial.println(ypr[0]);
   }
-    
+
+while(lol < 5)
+{
     frontSensorDistance = frontSensor.measure_distance_cm();
-    leftSensorDistance  = leftSensor.measure_distance_cm();
     rightSensorDistance = rightSensor.measure_distance_cm();
-// 
-//     Serial.print("Front Distance: ");
-//     Serial.println(frontSensorDistance);
-//
-//     Serial.print("Left Distance: ");
-//     Serial.println(leftSensorDistance);
-//
-//     Serial.print("Right Distance: ");
-//     Serial.println(rightSensorDistance);
-    if(frontSensorDistance < 60 ) {
-      analogWrite(thrustPin, 128);
-    }
-    if(frontSensorDistance < 40 ) {
-      if(rightSensorDistance > 40) { // NEED TO TURN RIGHT
-        turnDirection = 2;
-      } else {  // NEED TO TURN LEFT
-        turnDirection = 1;
-      }
+    lol++;
+    delay(500);
+    Serial.print(lol);
+    return;
+}
+    frontSensorDistance = frontSensor.measure_distance_cm();
+    rightSensorDistance = rightSensor.measure_distance_cm();
+//     leftSensorDistance  = leftSensor.measure_distance_cm();
+
+//if(prevFrontSensorDistance == -1) {
+//  prevFrontSensorDistance = frontSensorDistance;
+//  prevRightSensorDistance = rightSensorDistance;
+//} else {
+//  int diff1 = abs(prevFrontSensorDistance - frontSensorDistance); 
+//  int diff2 = abs(prevRightSensorDistance - rightSensorDistance); 
+//  if(diff1 > 10 || diff2 > 10) {
+//    return;
+//  }
+//}
+ 
+     Serial.print("Front Distance: ");
+     Serial.println(frontSensorDistance);
+
+     Serial.print("Right Distance: ");
+     Serial.println(rightSensorDistance);
+
+    if(turnDirection == 0 && frontSensorDistance < 100 ) {
+//      analogWrite(thrustPin, 0);
     } else {
-      turnDirection = 0;
+      analogWrite(thrustPin, 200);
     }
-    int servo0Value = map(ypr[0], -90, 90, 0, 180);
-
-
+    
+//    int diff = abs(ypr[0] - futureDirection);
+    Serial.print(ypr[0]);
+//    if(diff < 25) {
+      if(frontSensorDistance < 50 && frontSensorDistance > 3) {
+        if(rightSensorDistance > 20) { 
+          // NEED TO TURN RIGHT
+          turnDirection = 2;
+          futureDirection = futureDirection + 90;
+        } else {  
+          // NEED TO TURN LEFT
+          turnDirection = 1;
+          futureDirection = futureDirection - 90;
+        }
+      } else {
+        turnDirection = 0;
+      }
+//    }
+    
     if(turnDirection == 1) {
       //TURN LEFT
+      servo0.write(25);
     } else if(turnDirection == 2) {
-        //TURN RIGHT
-        int yaw = abs(ypr[0]);
-        if((yaw % 90) < 45) { 
-          servo0.write(135);
-        } else {
-          servo0.write(100);        
-        }
+      //TURN RIGHT
+      servo0.write(155);
     } else {
+      //GO STRAIGHT
       servo0.write(90);
- 
-        
     }
-    
 }
 
 
