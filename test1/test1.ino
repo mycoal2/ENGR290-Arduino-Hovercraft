@@ -89,7 +89,6 @@ void setup() {
 
     pinMode(liftPin, OUTPUT);
     pinMode(thrustPin, OUTPUT);
-
     servo0.attach(9);
     
     Serial.begin(115200);
@@ -150,7 +149,7 @@ void setup() {
   // set prescaler to 64 (i.e. divide clock speed of timer 1)
   TCCR2B = (1 << CS22);
 
-    delay(1500);
+    delay(500);
     digitalWrite(liftPin, HIGH);
     analogWrite(thrustPin, 190);
 }
@@ -192,7 +191,6 @@ void loop() {
     }
     
 //    int diff = abs(ypr[0] - futureDirection);
-    Serial.print(ypr[0]);
 //    if(diff < 25) {
       if(frontSensorDistance < 50 && frontSensorDistance > 3) {
         if(rightSensorDistance > 20) { 
