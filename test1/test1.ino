@@ -15,7 +15,7 @@
 Servo servo0;
 MPU6050 mpu;
 void calculate_IMU_error();
-
+// -------------------------------------------IMU--------------------------------------------
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
@@ -41,11 +41,9 @@ float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
 float roll, pitch, yaw;
 float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
 float elapsedTime, currentTime, previousTime;
-int c = 0;
-int j = 0;
+int c = 0; int j = 0;
 float correct;
-int lol = 0;
-
+// ------------------------------------------------------------------------------------------------
 
 // US SENSOR SPECIFIC
 // FRONT = P10
@@ -76,6 +74,9 @@ int prevRightSensorDistance = -1;
 
 int turnDirection = 0; // 0=>forward --- 1=>TURN RIGHT --- 2=>TURN LEFT
 int futureDirection = 0;
+
+const int ledPin = 13;      // activity LED pin
+bool blinkState = false; // state of the LED
 
 void setup() {
 // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -218,6 +219,9 @@ void loop() {
       //GO STRAIGHT
       servo0.write(90);
     }
+
+  blinkState = !blinkState;
+  digitalWrite(ledPin, blinkState);
 }
 
 
