@@ -39,11 +39,10 @@ float GyroX, GyroY, GyroZ;
 float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
 float roll, pitch, yaw;
 float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
-float elapsedTime, currentTime, previousTime;
 int c = 0;
 int j = 0;
 float correct;
-int lol = 0;
+
 
 
 // US SENSOR SPECIFIC
@@ -72,11 +71,12 @@ int frontSensorDistance;
 int rightSensorDistance;
 //int leftSensorDistance;
 
-int prevFrontSensorDistance = -1;
-int prevRightSensorDistance = -1;
-
 int turnDirection = 0; // 0=>forward --- 1=>TURN RIGHT --- 2=>TURN LEFT
-int futureDirection = 0;
+int currentYaw;
+int lol = 0;
+const int ledPin = 13;      // activity LED pin
+bool blinkState = false; // state of the LED
+int counter = 0;
 
 void setup() {
 // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -151,9 +151,10 @@ void setup() {
   // set prescaler to 64 (i.e. divide clock speed of timer 1)
   TCCR2B = (1 << CS22);
 
-    delay(1500);
+    Wire.setWireTimeout(3000,true);
+    delay(500);
     digitalWrite(liftPin, HIGH);
-    analogWrite(thrustPin, 190);
+    analogWrite(thrustPin, 220);
 }
 
 void loop() {
@@ -172,9 +173,58 @@ void loop() {
       } else {
         ypr[0] = ypr[0] - correct;
       }
-//    Serial.print("Yaw: ");
-//    Serial.println(ypr[0]);
+    Serial.print("Yaw: ");
+    Serial.println(ypr[0]);
   }
+
+  
+    if(turnDirection == 1) {
+      //TURN LEFT
+      servo0.write(25);
+      analogWrite(thrustPin, 255);
+      int diff = abs(abs(ypr[0]-currentYaw)-90);
+      Serial.print("Diff left: ");
+      Serial.println(diff);
+//      if(counter > 5000) {
+//          
+//        }
+      if(diff > 35) {
+        
+        if (lol % 15 == 0) {
+          blinkState = !blinkState;
+          digitalWrite(ledPin, blinkState);
+        } 
+      lol++;
+      return;
+      }
+      servo0.write(89);
+      delay(500);
+
+    } else if(turnDirection == 2) {
+      //TURN RIGHT
+      servo0.write(155);
+      analogWrite(thrustPin, 255);
+      int diff = abs(abs(ypr[0]-currentYaw)-90);
+      Serial.print("Diff right: ");
+      Serial.println(diff);
+      
+       if(diff > 35) {
+        if (lol % 15 == 0) {
+           blinkState = !blinkState;
+          digitalWrite(ledPin, blinkState);
+        } 
+      lol++;
+        return;
+      }
+      servo0.write(89);
+      delay(500);
+
+    } else {
+      //GO STRAIGHT
+      servo0.write(89);
+      analogWrite(thrustPin, 220);
+    }
+
 
 while(lol < 5)
 {
@@ -182,65 +232,53 @@ while(lol < 5)
     rightSensorDistance = rightSensor.measure_distance_cm();
     lol++;
     delay(500);
-    Serial.print(lol);
     return;
 }
+
     frontSensorDistance = frontSensor.measure_distance_cm();
     rightSensorDistance = rightSensor.measure_distance_cm();
-//     leftSensorDistance  = leftSensor.measure_distance_cm();
+//    leftSensorDistance  = leftSensor.measure_distance_cm();
 
-//if(prevFrontSensorDistance == -1) {
-//  prevFrontSensorDistance = frontSensorDistance;
-//  prevRightSensorDistance = rightSensorDistance;
-//} else {
-//  int diff1 = abs(prevFrontSensorDistance - frontSensorDistance); 
-//  int diff2 = abs(prevRightSensorDistance - rightSensorDistance); 
-//  if(diff1 > 10 || diff2 > 10) {
-//    return;
-//  }
-//}
  
      Serial.print("Front Distance: ");
      Serial.println(frontSensorDistance);
 
      Serial.print("Right Distance: ");
      Serial.println(rightSensorDistance);
-
-    if(turnDirection == 0 && frontSensorDistance < 100 ) {
+//
+//    if(turnDirection == 0 && frontSensorDistance < 100 ) {
 //      analogWrite(thrustPin, 0);
-    } else {
-      analogWrite(thrustPin, 200);
-    }
+//    } else {
+//      analogWrite(thrustPin, 220);
+//    }
     
-//    int diff = abs(ypr[0] - futureDirection);
     Serial.print(ypr[0]);
-//    if(diff < 25) {
-      if(frontSensorDistance < 50 && frontSensorDistance > 3) {
-        if(rightSensorDistance > 20) { 
+      if(frontSensorDistance < 45 && frontSensorDistance > 3) {
+        if(rightSensorDistance > 32) { 
           // NEED TO TURN RIGHT
           turnDirection = 2;
-          futureDirection = futureDirection + 90;
+          currentYaw = ypr[0];
         } else {  
           // NEED TO TURN LEFT
+          currentYaw = ypr[0];
           turnDirection = 1;
-          futureDirection = futureDirection - 90;
         }
       } else {
         turnDirection = 0;
       }
-//    }
-    
-    if(turnDirection == 1) {
-      //TURN LEFT
-      servo0.write(25);
-    } else if(turnDirection == 2) {
-      //TURN RIGHT
-      servo0.write(155);
-    } else {
-      //GO STRAIGHT
-      servo0.write(90);
-    }
+
+
+
+  if (lol % 15 == 0) {
+    blinkState = !blinkState;
+    digitalWrite(ledPin, blinkState);
+  } 
+  lol++;
+  if(lol > 1505) {
+    lol = 5; 
+  }
 }
+
 
 
 
