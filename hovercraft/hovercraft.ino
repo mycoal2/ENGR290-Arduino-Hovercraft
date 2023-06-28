@@ -151,7 +151,7 @@ void setup() {
   // set prescaler to 64 (i.e. divide clock speed of timer 1)
   TCCR2B = (1 << CS22);
 
-    Wire.setWireTimeout(3000,true);
+//    Wire.setWireTimeout(3000,true);
     delay(500);
     digitalWrite(liftPin, HIGH);
     analogWrite(thrustPin, 220);
@@ -181,15 +181,12 @@ void loop() {
     if(turnDirection == 1) {
       //TURN LEFT
       servo0.write(25);
-      analogWrite(thrustPin, 255);
+      analogWrite(thrustPin, 240);
       int diff = abs(abs(ypr[0]-currentYaw)-90);
       Serial.print("Diff left: ");
       Serial.println(diff);
-//      if(counter > 5000) {
-//          
-//        }
-      if(diff > 35) {
-        
+      
+      if(diff > 45) {
         if (lol % 15 == 0) {
           blinkState = !blinkState;
           digitalWrite(ledPin, blinkState);
@@ -197,18 +194,19 @@ void loop() {
       lol++;
       return;
       }
-      servo0.write(89);
+      turnDirection = 0;
+      servo0.write(90);
       delay(500);
 
     } else if(turnDirection == 2) {
       //TURN RIGHT
       servo0.write(155);
-      analogWrite(thrustPin, 255);
+      analogWrite(thrustPin, 240);
       int diff = abs(abs(ypr[0]-currentYaw)-90);
       Serial.print("Diff right: ");
       Serial.println(diff);
       
-       if(diff > 35) {
+       if(diff > 45) {
         if (lol % 15 == 0) {
            blinkState = !blinkState;
           digitalWrite(ledPin, blinkState);
@@ -216,12 +214,13 @@ void loop() {
       lol++;
         return;
       }
-      servo0.write(89);
+      turnDirection = 0;
+      servo0.write(90);
       delay(500);
 
     } else {
       //GO STRAIGHT
-      servo0.write(89);
+      servo0.write(90);
       analogWrite(thrustPin, 220);
     }
 
@@ -253,7 +252,7 @@ while(lol < 5)
 //    }
     
     Serial.print(ypr[0]);
-      if(frontSensorDistance < 45 && frontSensorDistance > 3) {
+      if(frontSensorDistance < 50) {
         if(rightSensorDistance > 32) { 
           // NEED TO TURN RIGHT
           turnDirection = 2;
